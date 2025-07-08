@@ -1,10 +1,12 @@
 {
   "domain": "hassbeam_connect",
   "name": "Hassbeam Connect",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "config_flow": true,
   "documentation": "https://github.com/BasilBerg/hassbeam-connect",
   "issue_tracker": "https://github.com/BasilBerg/hassbeam-connect/issues",
   "codeowners": ["@BasilBerg"],
-  "requirements": []
+  "requirements": [],
+  "frontend": true,
+  "integration_type": "service"
 }

@@ -1,8 +1,60 @@
 /**
  * Hassbeam Connect Card for Home Assistant
- * Allows capturing IR codes from remote controls
+ * Automatically captures IR codes from remote controls
  */
+
+// IIFE um sicherzustellen, dass die Karte nur einmal registriert wird
+(function() {
+  'use strict';
+  
+  // Prüfen ob bereits registriert
+  if (window.customCards && window.customCards.find(card => card.type === "hassbeam-connect-card")) {
+    console.info("Hassbeam Connect Card bereits registriert");
+    return;
+  }
+  
+  // Automatische Karten-Registrierung
+  window.customCards = window.customCards || [];
+  window.customCards.push({
+    type: "hassbeam-connect-card",
+    name: "Hassbeam Connect Card",
+    description: "Capture IR codes from remote controls using HassBeam device",
+    preview: true,
+    documentationURL: "https://github.com/BasilBerg/hassbeam-connect"
+  });
+  
+  console.info("✅ Hassbeam Connect Card registriert");
+
+})();
+
 class HassBeamConnectCard extends HTMLElement {
+  constructor() {
+    super();
+    this._initialized = false;
+    this._eventListener = null;
+  }
+
+  static getConfigElement() {
+    return document.createElement("hassbeam-connect-card-config");
+  }
+
+  static getStubConfig() {
+    return {
+      type: "custom:hassbeam-connect-card",
+      name: "Hassbeam Connect"
+    };
+  }
+
+  connectedCallback() {
+    console.log("Hassbeam Connect Card connected");
+  }
+
+  disconnectedCallback() {
+    if (this._eventListener && this._hass) {
+      this._hass.connection.unsubscribeEvents(this._eventListener);
+    }
+  }
+
   set hass(hass) {
     this._hass = hass;
     

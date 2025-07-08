@@ -2,6 +2,7 @@
 import logging
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers import discovery
 from .const import DOMAIN, IR_EVENT_TYPE, DB_NAME
 from .database import init_db, save_ir_code
 
@@ -14,6 +15,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     # Initialize domain data
     hass.data.setdefault(DOMAIN, {})
+    
+    # Automatische Frontend-Resource-Registrierung
+    await _register_frontend_resource(hass)
     
     # Initialize database
     try:
@@ -96,3 +100,44 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.pop(DOMAIN, None)
     
     return True
+
+
+async def _register_frontend_resource(hass: HomeAssistant) -> None:
+    """Register the frontend resource automatically."""
+    try:
+        # Einfache Methode: Resource direkt über den HTTP-Server verfügbar machen
+        card_path = hass.config.path("www/hassbeam-card.js")
+        
+        # Prüfen ob die Datei existiert
+        import os
+        if not os.path.exists(card_path):
+            _LOGGER.warning("Frontend card file not found at: %s", card_path)
+            return
+            
+        # HTTP-Route für die Karte registrieren
+        hass.http.register_static_path(
+            "/local/hassbeam-card.js",
+            card_path,
+            cache_headers=False
+        )
+        
+        _LOGGER.info("✅ Frontend resource registered: /local/hassbeam-card.js")
+        
+        # Benutzer benachrichtigen mit Anweisungen
+        try:
+            await hass.services.async_call(
+                "persistent_notification",
+                "create",
+                {
+                    "title": "Hassbeam Connect bereit!",
+                    "message": "🎉 Integration installiert!\n\n**Nächste Schritte:**\n1. Karte hinzufügen: `type: custom:hassbeam-connect-card`\n2. Falls die Karte nicht lädt, Resource manuell hinzufügen:\n   - URL: `/local/hassbeam-card.js`\n   - Type: JavaScript Module",
+                    "notification_id": "hassbeam_connect_ready"
+                },
+                blocking=False
+            )
+        except Exception:
+            pass  # Notification ist optional
+            
+    except Exception as err:
+        _LOGGER.warning("Could not auto-register frontend resource: %s", err)
+        _LOGGER.info("Please manually add /local/hassbeam-card.js to your dashboard resources")
