@@ -105,32 +105,50 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def _register_frontend_resource(hass: HomeAssistant) -> None:
     """Register the frontend resource automatically."""
     try:
-        # Einfache Methode: Resource direkt über den HTTP-Server verfügbar machen
-        card_path = hass.config.path("www/hassbeam-card.js")
+        # HACS-Installation: Datei liegt in hacsfiles
+        hacs_path = "/hacsfiles/hassbeam-connect/hassbeam-card.js"
+        local_path = "/local/hassbeam-card.js"
         
-        # Prüfen ob die Datei existiert
-        import os
-        if not os.path.exists(card_path):
-            _LOGGER.warning("Frontend card file not found at: %s", card_path)
-            return
+        # Prüfen welcher Pfad existiert
+        import aiohttp
+        import asyncio
+        
+        try:
+            # Test HACS-Pfad
+            session = aiohttp.ClientSession()
+            async with session.get(f"http://localhost:8123{hacs_path}") as response:
+                if response.status == 200:
+                    resource_url = hacs_path
+                    _LOGGER.info("✅ HACS Frontend resource found: %s", hacs_path)
+                else:
+                    resource_url = local_path
+                    _LOGGER.info("✅ Local Frontend resource found: %s", local_path)
+            await session.close()
+        except:
+            # Fallback zu local path
+            resource_url = local_path
             
-        # HTTP-Route für die Karte registrieren
-        hass.http.register_static_path(
-            "/local/hassbeam-card.js",
-            card_path,
-            cache_headers=False
-        )
-        
-        _LOGGER.info("✅ Frontend resource registered: /local/hassbeam-card.js")
-        
-        # Benutzer benachrichtigen mit Anweisungen
+        # Benutzer über korrekte URL informieren
+        message = f"""🎉 Hassbeam Connect installiert!
+
+**Karte hinzufügen:**
+1. Dashboard bearbeiten → Add Card → Manual
+2. YAML: `type: custom:hassbeam-connect-card`
+
+**Falls Karte nicht lädt, Resource manuell hinzufügen:**
+- Settings → Dashboards → Resources → Add Resource
+- URL: `{resource_url}`
+- Type: JavaScript Module
+
+**HACS-Benutzer:** Die Resource wird automatisch von HACS verwaltet."""
+            
         try:
             await hass.services.async_call(
                 "persistent_notification",
                 "create",
                 {
                     "title": "Hassbeam Connect bereit!",
-                    "message": "🎉 Integration installiert!\n\n**Nächste Schritte:**\n1. Karte hinzufügen: `type: custom:hassbeam-connect-card`\n2. Falls die Karte nicht lädt, Resource manuell hinzufügen:\n   - URL: `/local/hassbeam-card.js`\n   - Type: JavaScript Module",
+                    "message": message,
                     "notification_id": "hassbeam_connect_ready"
                 },
                 blocking=False
@@ -140,4 +158,4 @@ async def _register_frontend_resource(hass: HomeAssistant) -> None:
             
     except Exception as err:
         _LOGGER.warning("Could not auto-register frontend resource: %s", err)
-        _LOGGER.info("Please manually add /local/hassbeam-card.js to your dashboard resources")
+        _LOGGER.info("HACS users: The resource should be automatically managed by HACS")

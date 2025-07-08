@@ -1,0 +1,4 @@
+name: Hassbeam Connect
+description: Capture and save IR codes from remote controls using HassBeam
+# version is automatically set by HACS
+# documentation is automatically set by HACS
