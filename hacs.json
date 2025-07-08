@@ -1,7 +1,9 @@
 {
   "name": "Hassbeam Connect",
-  "content_in_root": false,
+  "hacs": "1.32.0", 
   "domains": ["hassbeam_connect"],
   "homeassistant": "2024.0.0",
-  "render_readme": true
+  "render_readme": true,
+  "frontend": true,
+  "filename": "hassbeam-card.js"
 }
