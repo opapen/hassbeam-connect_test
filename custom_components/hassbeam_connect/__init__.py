@@ -4,7 +4,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers import discovery
 from .const import DOMAIN, IR_EVENT_TYPE, DB_NAME
-from .database import init_db, save_ir_code
+from .database import init_db, save_ir_code, get_ir_codes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -85,6 +85,43 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         handle_start_listening_service
     )
 
+    async def handle_get_recent_codes_service(call):
+        """Handle the get_recent_codes service call."""
+        device = call.data.get("device")
+        limit = call.data.get("limit", 10)
+        
+        try:
+            db_path = hass.config.path(DB_NAME)
+            codes = get_ir_codes(db_path, device, limit)
+            
+            # Convert to a more user-friendly format
+            formatted_codes = []
+            for code in codes:
+                formatted_codes.append({
+                    "id": code[0],
+                    "device": code[1],
+                    "action": code[2],
+                    "created_at": code[4]
+                })
+            
+            # Fire event with the codes
+            hass.bus.fire(f"{DOMAIN}_codes_retrieved", {
+                "codes": formatted_codes
+            })
+            
+            return formatted_codes
+            
+        except Exception as err:
+            _LOGGER.error("Failed to retrieve IR codes: %s", err)
+            return []
+
+    # Register the new service
+    hass.services.async_register(
+        DOMAIN, 
+        "get_recent_codes", 
+        handle_get_recent_codes_service
+    )
+
     _LOGGER.info("Hassbeam Connect integration setup completed")
     return True
 
@@ -93,8 +130,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.debug("Unloading Hassbeam Connect integration")
     
-    # Remove service
+    # Remove services
     hass.services.async_remove(DOMAIN, "start_listening")
+    hass.services.async_remove(DOMAIN, "get_recent_codes")
     
     # Clear data
     hass.data.pop(DOMAIN, None)

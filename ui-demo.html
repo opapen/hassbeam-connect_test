@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hassbeam Connect - UI Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .demo-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .header {
+            background: #1976d2;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .mockup {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            margin: 20px 0;
+        }
+        .instructions {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .code-block {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .step {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .check {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-card">
+            <div class="header">
+                <h1>🎯 Hassbeam Connect - UI Demo</h1>
+                <p>Benutzeroberfläche für IR-Code Aufnahme</p>
+            </div>
+            
+            <div class="content">
+                <div class="mockup">
+                    <h2>📱 Hier würde die Hassbeam Connect Karte erscheinen</h2>
+                    <p>Diese Demo zeigt Ihnen, wie die UI aussehen würde</p>
+                    <p>In Home Assistant würden Sie hier IR-Codes aufnehmen können</p>
+                </div>
+
+                <div class="instructions">
+                    <h3>📋 So installieren Sie die UI:</h3>
+                    <ol>
+                        <li>Kopieren Sie <code>www/hassbeam-card.js</code> in Ihr <code>www/</code> Verzeichnis</li>
+                        <li>Registrieren Sie die Resource in Home Assistant</li>
+                        <li>Fügen Sie die Karte zu Ihrem Dashboard hinzu</li>
+                    </ol>
+                </div>
+
+                <div class="step">
+                    <h3>1. Dateien überprüfen</h3>
+                    <div class="check">✅ custom_components/hassbeam_connect/ - Integration vorhanden</div>
+                    <div class="check">✅ www/hassbeam-card.js - Frontend-Karte erstellt</div>
+                    <div class="warning">⚠️ UI_INSTALLATION.md - Detaillierte Anleitung</div>
+                </div>
+
+                <div class="step">
+                    <h3>2. Integration einrichten</h3>
+                    <p>In Home Assistant:</p>
+                    <div class="code-block">
+Einstellungen → Geräte & Dienste → + Integration hinzufügen → "Hassbeam Connect"
+                    </div>
+                </div>
+
+                <div class="step">
+                    <h3>3. Frontend-Resource registrieren</h3>
+                    <p>In Home Assistant:</p>
+                    <div class="code-block">
+Einstellungen → Dashboards → Ressourcen → + Ressource hinzufügen
+URL: /local/hassbeam-card.js
+Typ: JavaScript Modul
+                    </div>
+                </div>
+
+                <div class="step">
+                    <h3>4. Karte zum Dashboard hinzufügen</h3>
+                    <div class="code-block">
+type: custom:hassbeam-connect-card
+                    </div>
+                </div>
+
+                <div class="step">
+                    <h3>5. Features der UI</h3>
+                    <ul>
+                        <li>🎯 <strong>IR-Code Aufnahme:</strong> Einfache Eingabe von Gerät und Aktion</li>
+                        <li>📋 <strong>Kürzliche Codes:</strong> Anzeige der letzten aufgenommenen Codes</li>
+                        <li>🔄 <strong>Live-Updates:</strong> Automatische Aktualisierung bei neuen Codes</li>
+                        <li>⚡ <strong>Services:</strong> Integration in Home Assistant Automatisierungen</li>
+                        <li>🎨 <strong>Modern Design:</strong> Responsive und benutzerfreundlich</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h3>6. Verfügbare Services</h3>
+                    <div class="code-block">
+# IR-Code Aufnahme starten
+service: hassbeam_connect.start_listening
+data:
+  device: "tv"
+  action: "power"
+
+# Kürzliche Codes abrufen  
+service: hassbeam_connect.get_recent_codes
+data:
+  limit: 10
+                    </div>
+                </div>
+
+                <div class="instructions">
+                    <h3>🚀 Nächste Schritte:</h3>
+                    <p>1. Folgen Sie der <strong>UI_INSTALLATION.md</strong> für die detaillierte Installation</p>
+                    <p>2. Stellen Sie sicher, dass Ihr HassBeam-Gerät korrekt konfiguriert ist</p>
+                    <p>3. Testen Sie die UI mit echten IR-Codes</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-card">
+            <div class="content">
+                <h3>📁 Projektstruktur</h3>
+                <div class="code-block">
+hassbeam-connect/
+├── custom_components/
+│   └── hassbeam_connect/
+│       ├── __init__.py          # Hauptintegration mit Services
+│       ├── config_flow.py       # Konfigurationsflow
+│       ├── const.py            # Konstanten
+│       ├── database.py         # Datenbankoperationen
+│       ├── manifest.json       # Integration Manifest
+│       └── services.yaml       # Service Definitionen
+├── www/
+│   └── hassbeam-card.js        # Frontend Lovelace Karte
+├── UI_INSTALLATION.md          # Detaillierte UI-Anleitung
+├── README.md                   # Projekt-Dokumentation
+└── hacs.json                   # HACS-Konfiguration
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
