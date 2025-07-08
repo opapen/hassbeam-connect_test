@@ -20,15 +20,22 @@ python test_hassbeam.py
 
 ## Installation
 
-### Option 1: Automatic Installation
+### Option 1: HACS Installation (empfohlen)
+1. Fügen Sie dieses Repository als benutzerdefiniertes Repository in HACS hinzu
+2. Installieren Sie "Hassbeam Connect" über HACS
+3. Starten Sie Home Assistant neu
+4. Folgen Sie der `HACS_INSTALLATION.md` für die UI-Einrichtung
+
+### Option 2: Manuelle Installation
+1. Kopieren Sie `custom_components/hassbeam_connect` in Ihr `custom_components` Verzeichnis
+2. Kopieren Sie `hassbeam-card.js` in Ihr `www` Verzeichnis  
+3. Starten Sie Home Assistant neu
+4. Folgen Sie der `UI_INSTALLATION.md` für die UI-Einrichtung
+
+### Option 3: Automatische Installation
 ```bash
 python install.py
 ```
-
-### Option 2: Manual Installation
-1. Copy `custom_components/hassbeam_connect` to your Home Assistant `custom_components` directory
-2. Copy `www/hassbeam-card.js` to your Home Assistant `www` directory  
-3. Restart Home Assistant
 
 ## Setup
 

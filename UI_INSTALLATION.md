@@ -4,11 +4,33 @@ Diese Anleitung zeigt Ihnen, wie Sie die Benutzeroberfläche für Hassbeam Conne
 
 ## Schritt 1: Integration installieren
 
+### Option A: HACS Installation (empfohlen)
+
+1. **Über HACS installieren:**
+   - Öffnen Sie HACS in Home Assistant
+   - Gehen Sie zu "Integrationen" 
+   - Klicken Sie auf "Benutzerdefinierte Repositories"
+   - Fügen Sie die Repository-URL hinzu: `https://github.com/BasilBerg/hassbeam-connect`
+   - Kategorie: "Integration"
+   - Installieren Sie "Hassbeam Connect"
+
+2. **Nach HACS-Installation befinden sich die Dateien hier:**
+   ```
+   # Integration:
+   config/custom_components/hassbeam_connect/
+   
+   # Frontend-Karte (automatisch von HACS verwaltet):
+   config/www/community/hassbeam-connect/hassbeam-card.js
+   ```
+
+### Option B: Manuelle Installation
+
 1. **Dateien kopieren:**
-   - Kopieren Sie den gesamten Ordner `custom_components/hassbeam_connect` in Ihr Home Assistant `custom_components` Verzeichnis
-   - Kopieren Sie `www/hassbeam-card.js` in Ihr Home Assistant `www` Verzeichnis
+   - Kopieren Sie `custom_components/hassbeam_connect/` nach `config/custom_components/`
+   - Kopieren Sie `hassbeam-card.js` nach `config/www/`
 
 2. **Home Assistant neustarten:**
+
    ```bash
    # Home Assistant Core
    systemctl restart home-assistant
@@ -26,21 +48,21 @@ Diese Anleitung zeigt Ihnen, wie Sie die Benutzeroberfläche für Hassbeam Conne
 
 ## Schritt 3: Frontend-Resource registrieren
 
-### Option A: Über die UI (empfohlen)
+### Für HACS-Installation:
+
+1. Gehen Sie zu **Einstellungen** → **Dashboards** → **Ressourcen**
+2. Klicken Sie auf **+ Ressource hinzufügen**
+3. **URL:** `/hacsfiles/hassbeam-connect/hassbeam-card.js`
+4. **Ressourcentyp:** `JavaScript Modul`
+5. Klicken Sie auf **Erstellen**
+
+### Für manuelle Installation:
+
 1. Gehen Sie zu **Einstellungen** → **Dashboards** → **Ressourcen**
 2. Klicken Sie auf **+ Ressource hinzufügen**
 3. **URL:** `/local/hassbeam-card.js`
 4. **Ressourcentyp:** `JavaScript Modul`
 5. Klicken Sie auf **Erstellen**
-
-### Option B: Über YAML (falls HACS verwendet)
-Fügen Sie in Ihrer `configuration.yaml` hinzu:
-```yaml
-lovelace:
-  resources:
-    - url: /local/hassbeam-card.js
-      type: module
-```
 
 ## Schritt 4: Karte zum Dashboard hinzufügen
 

@@ -121,7 +121,13 @@ Einstellungen → Geräte & Dienste → + Integration hinzufügen → "Hassbeam 
 
                 <div class="step">
                     <h3>3. Frontend-Resource registrieren</h3>
-                    <p>In Home Assistant:</p>
+                    <p><strong>Für HACS-Installation:</strong></p>
+                    <div class="code-block">
+Einstellungen → Dashboards → Ressourcen → + Ressource hinzufügen
+URL: /hacsfiles/hassbeam-connect/hassbeam-card.js
+Typ: JavaScript Modul
+                    </div>
+                    <p><strong>Für manuelle Installation:</strong></p>
                     <div class="code-block">
 Einstellungen → Dashboards → Ressourcen → + Ressource hinzufügen
 URL: /local/hassbeam-card.js
