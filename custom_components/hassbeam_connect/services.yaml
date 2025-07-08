@@ -1,0 +1,9 @@
+start_listening:
+  description: "Wait for next IR code"
+  fields:
+    device:
+      description: "Target device (e.g., TV, AC)"
+      example: tv
+    action:
+      description: "Action (e.g., ok, volume_up)"
+      example: ok

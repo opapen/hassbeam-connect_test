@@ -1,0 +1,6 @@
+{
+  "name": "Hassbeam Connect",
+  "content_in_root": false,
+  "domains": ["hassbeam_connect"],
+  "homeassistant": "2024.0.0"
+}
