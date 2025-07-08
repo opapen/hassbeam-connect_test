@@ -1,5 +1,5 @@
 from homeassistant.core import HomeAssistant, callback
-from .const import DOMAIN, IR_EVENT_TYPE
+from .const import DOMAIN, IR_EVENT_TYPE, DB_NAME
 from .database import init_db, save_ir_code
 
 

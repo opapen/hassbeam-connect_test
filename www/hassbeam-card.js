@@ -1,4 +1,4 @@
-class IRCodeLoggerCard extends HTMLElement {
+class HassBeamConnectCard extends HTMLElement {
   set hass(hass) {
     this.innerHTML = `
       <div style="padding: 16px;">
@@ -14,7 +14,7 @@ class IRCodeLoggerCard extends HTMLElement {
     this.querySelector('#listen').onclick = () => {
       const device = this.querySelector("#device").value;
       const action = this.querySelector("#action").value;
-      hass.callService("ir_code_logger", "start_listening", {
+      hass.callService("hassbeam_connect", "start_listening", {
         device: device,
         action: action
       });
@@ -24,11 +24,11 @@ class IRCodeLoggerCard extends HTMLElement {
     hass.connection.subscribeEvents((event) => {
       this.querySelector("#status").innerText = `Gespeichert: ${event.data.device} - ${event.data.action}`;
       this.querySelector("#action").value = "";
-    }, "ir_code_logger_saved");
+    }, "hassbeam_connect_saved");
   }
 
   setConfig() { }
   getCardSize() { return 1; }
 }
 
-customElements.define('ir-code-logger-card', IRCodeLoggerCard);
+customElements.define('hassbeam-connect-card', HassBeamConnectCard);
