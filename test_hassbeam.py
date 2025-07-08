@@ -137,9 +137,14 @@ def test_database_functionality():
         
     finally:
         # Clean up test database
-        if os.path.exists(test_db_path):
-            os.remove(test_db_path)
-            print(f"\n🧹 Cleaned up test database: {test_db_path}")
+        try:
+            if os.path.exists(test_db_path):
+                os.remove(test_db_path)
+                print(f"\n🧹 Cleaned up test database: {test_db_path}")
+        except PermissionError:
+            print(f"\n⚠️ Could not clean up test database: {test_db_path} (file in use)")
+        except Exception as e:
+            print(f"\n⚠️ Error cleaning up: {e}")
 
 def test_event_simulation():
     """Simulate the event flow that would happen in Home Assistant"""
@@ -192,8 +197,13 @@ def test_event_simulation():
         return False
         
     finally:
-        if os.path.exists(test_db_path):
-            os.remove(test_db_path)
+        try:
+            if os.path.exists(test_db_path):
+                os.remove(test_db_path)
+        except PermissionError:
+            print(f"⚠️ Could not clean up test database: {test_db_path} (file in use)")
+        except Exception as e:
+            print(f"⚠️ Error cleaning up: {e}")
 
 if __name__ == "__main__":
     print("🏠 Hassbeam Connect - Test Suite")

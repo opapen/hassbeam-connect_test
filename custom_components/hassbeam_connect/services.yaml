@@ -1,9 +1,18 @@
 start_listening:
-  description: "Wait for next IR code"
+  name: "Start IR Code Listening"
+  description: "Start listening for the next IR code from your remote control"
   fields:
     device:
-      description: "Target device (e.g., TV, AC)"
-      example: tv
+      name: "Device Name"
+      description: "Name of the device (e.g., TV, AC, Soundbar)"
+      required: true
+      example: "tv"
+      selector:
+        text:
     action:
-      description: "Action (e.g., ok, volume_up)"
-      example: ok
+      name: "Action Name"  
+      description: "Name of the action/button (e.g., power, volume_up, channel_1)"
+      required: true
+      example: "power"
+      selector:
+        text:
