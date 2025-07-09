@@ -76,20 +76,22 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         errors = {}
         
         if user_input is not None:
-            if user_input.get("start_listening"):
-                # Start listening button pressed
-                device = user_input.get("device", "").strip()
-                action = user_input.get("action", "").strip()
-                
+            device = user_input.get("device", "").strip()
+            action = user_input.get("action", "").strip()
+            
+            # Store current values
+            self._device = device
+            self._action = action
+            
+            # Check if start listening was triggered
+            if user_input.get("submit") == "start_listening":
                 if not device:
                     errors["device"] = "device_required"
                 if not action:
                     errors["action"] = "action_required"
                 
                 if not errors:
-                    # Store values and start listening
-                    self._device = device
-                    self._action = action
+                    # Start listening
                     self._listening = True
                     self._success_message = None
                     
@@ -106,13 +108,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     return await self._show_capture_form(
                         waiting_message=f"Waiting for IR signal for {device}.{action}...",
                         device=device,
-                        action="",  # Clear action field
+                        action="",  # Clear action field after starting
                         listening=True
                     )
-            else:
-                # Form updated, store values
-                self._device = user_input.get("device", "").strip()
-                self._action = user_input.get("action", "").strip()
 
         return await self._show_capture_form()
 
@@ -165,16 +163,19 @@ Use this interface to capture and store IR codes from your remote controls.
         if self._success_message:
             description += f"\n\n{self._success_message}"
 
-        # Build schema
+        # Build schema - always show fields and button
         schema_dict = {
             vol.Required("device", default=device): str,
             vol.Required("action", default=action): str,
         }
         
-        # Add button (disabled if fields empty or currently listening)
+        # Add submit button - enabled/disabled based on state
         can_start = bool(device and action and not listening)
         if can_start:
-            schema_dict[vol.Optional("start_listening", default=False)] = bool
+            schema_dict[vol.Required("submit", default="start_listening")] = vol.In(["start_listening"])
+        else:
+            # Show disabled button by using optional with fixed value
+            schema_dict[vol.Optional("submit_disabled", default="Start Listening (fill fields first)")] = str
 
         schema = vol.Schema(schema_dict)
 
