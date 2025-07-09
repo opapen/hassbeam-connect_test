@@ -2,7 +2,6 @@
 import logging
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers import discovery
 from .const import DOMAIN, IR_EVENT_TYPE, DB_NAME
 from .database import init_db, save_ir_code, get_ir_codes
 
@@ -13,8 +12,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Hassbeam Connect from a config entry."""
     _LOGGER.debug("Setting up Hassbeam Connect integration")
     
-    # Initialize domain data
+    # Store config data
     hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN]["config"] = entry.data
     
     # Automatische Frontend-Resource-Registrierung
     await _register_frontend_resource(hass)
@@ -68,11 +68,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_start_listening_service(call):
         """Handle the start_listening service call."""
-        device = call.data.get("device", "").strip()
+        config = hass.data[DOMAIN]["config"]
+        device = call.data.get("device") or config.get("device_name", "TV")
         action = call.data.get("action", "").strip()
         
-        if not device or not action:
-            _LOGGER.error("Device and action are required")
+        if not action:
+            _LOGGER.error("Action is required")
             return
             
         _LOGGER.info("Starting to listen for IR code: %s.%s", device, action)
@@ -143,39 +144,23 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def _register_frontend_resource(hass: HomeAssistant) -> None:
     """Show setup notification to user."""
     try:
-        # Benutzerinformation über erfolgreiche Installation
-        message = """🎉 Hassbeam Connect erfolgreich installiert!
+        message = """🎉 Hassbeam Connect successfully installed!
 
-**WICHTIG - Frontend-Karte aktivieren:**
+Services available:
+- hassbeam_connect.start_listening
+- hassbeam_connect.get_recent_codes
 
-🔧 **Für HACS-Installation:**
-1. Settings → Dashboards → Resources → Add Resource
-2. URL: `/hacsfiles/hassbeam-connect/hassbeam-card.js`
-3. Type: JavaScript Module
-4. Create klicken
-
-📝 **Karte hinzufügen:**
-- Dashboard bearbeiten → Add Card → Manual
-- YAML: `type: custom:hassbeam-connect-card`
-
-💡 **Service verfügbar:**
-- `hassbeam_connect.start_listening` zum Aufnehmen von IR-Codes
-
-❓ **Probleme?** Siehe HACS_INSTALL.md für detaillierte Anweisungen."""
+Check documentation for usage examples."""
             
-        try:
-            await hass.services.async_call(
-                "persistent_notification",
-                "create",
-                {
-                    "title": "Hassbeam Connect - Setup erforderlich",
-                    "message": message,
-                    "notification_id": "hassbeam_connect_setup"
-                },
-                blocking=False
-            )
-        except Exception:
-            pass  # Notification ist optional
-            
+        await hass.services.async_call(
+            "persistent_notification",
+            "create",
+            {
+                "title": "Hassbeam Connect Ready",
+                "message": message,
+                "notification_id": "hassbeam_connect_setup"
+            },
+            blocking=False
+        )
     except Exception as err:
         _LOGGER.debug("Could not show setup notification: %s", err)
