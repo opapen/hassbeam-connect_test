@@ -34,9 +34,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     @callback
     def handle_ir_event(event):
         """Handle incoming IR events from HassBeam device."""
+        _LOGGER.warning("DEBUG: IR event handler called! Event: %s, Data: %s", event.event_type, event.data)
+        
         pending = hass.data[DOMAIN].get("pending")
         if not pending:
-            _LOGGER.debug("Received IR event but no capture pending")
+            _LOGGER.warning("DEBUG: Received IR event but no capture pending. Event: %s", event.event_type)
             return
 
         device = pending["device"]
@@ -65,13 +67,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Listen for IR events from HassBeam device
     hass.bus.async_listen(IR_EVENT_TYPE, handle_ir_event)
+    
+    # Debug: Listen to ALL events to see what's actually being sent
+    @callback
+    def debug_all_events(event):
+        """Debug handler to see all events."""
+        if "ir" in event.event_type.lower() or "remote" in event.event_type.lower():
+            _LOGGER.warning("DEBUG: Received event: %s with data: %s", event.event_type, event.data)
+    
+    hass.bus.async_listen("*", debug_all_events)
 
     async def handle_start_listening_service(call):
         """Handle the start_listening service call."""
-        config = hass.data[DOMAIN]["config"]
-        device = call.data.get("device") or config.get("device_name", "TV")
+        device = call.data.get("device", "").strip()
         action = call.data.get("action", "").strip()
         
+        if not device:
+            _LOGGER.error("Device is required")
+            return
+            
         if not action:
             _LOGGER.error("Action is required")
             return
