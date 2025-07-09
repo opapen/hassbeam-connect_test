@@ -84,7 +84,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             self._action = action
             
             # Check if start listening was triggered
-            if user_input.get("submit") == "start_listening":
+            if "start_listening" in user_input:
                 if not device:
                     errors["device"] = "device_required"
                 if not action:
@@ -169,20 +169,19 @@ Use this interface to capture and store IR codes from your remote controls.
             vol.Required("action", default=action): str,
         }
         
-        # Add submit button - enabled/disabled based on state
-        can_start = bool(device and action and not listening)
-        if can_start:
-            schema_dict[vol.Required("submit", default="start_listening")] = vol.In(["start_listening"])
+        # Always show button - Home Assistant will handle it as a submit button
+        if not listening:
+            schema_dict[vol.Optional("start_listening")] = vol.Schema({})
         else:
-            # Show disabled button by using optional with fixed value
-            schema_dict[vol.Optional("submit_disabled", default="Start Listening (fill fields first)")] = str
+            # Show waiting state in description instead of disabling button
+            pass
 
         schema = vol.Schema(schema_dict)
 
         return self.async_show_form(
             step_id="init",
             data_schema=schema,
-            errors={},
+            errors=errors,
             description_placeholders={
                 "description": description
             }
