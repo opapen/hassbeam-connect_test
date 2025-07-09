@@ -3,13 +3,11 @@ from __future__ import annotations
 
 import logging
 from typing import Any
-import asyncio
 
 import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.core import callback
 
 from .const import DOMAIN
 
@@ -64,10 +62,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
         self.config_entry = config_entry
-        self._device = ""
-        self._action = ""
-        self._success_message = None
-        self._listening = False
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -79,110 +73,52 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             device = user_input.get("device", "").strip()
             action = user_input.get("action", "").strip()
             
-            # Store current values
-            self._device = device
-            self._action = action
-            
             # Check if start listening was triggered
-            if "start_listening" in user_input:
+            if user_input.get("start_listening"):
                 if not device:
                     errors["device"] = "device_required"
                 if not action:
                     errors["action"] = "action_required"
                 
                 if not errors:
-                    # Start listening
-                    self._listening = True
-                    self._success_message = None
-                    
-                    # Call start_listening service
-                    await self.hass.services.async_call(
-                        DOMAIN,
-                        "start_listening",
-                        {"device": device, "action": action}
-                    )
-                    
-                    # Listen for success event
-                    self._setup_event_listener()
-                    
-                    return await self._show_capture_form(
-                        waiting_message=f"Waiting for IR signal for {device}.{action}...",
-                        device=device,
-                        action="",  # Clear action field after starting
-                        listening=True
-                    )
+                    try:
+                        # Call start_listening service
+                        await self.hass.services.async_call(
+                            DOMAIN,
+                            "start_listening",
+                            {"device": device, "action": action},
+                            blocking=True
+                        )
+                        
+                        # Show success message
+                        return self.async_show_form(
+                            step_id="init",
+                            data_schema=self._get_schema(device, ""),
+                            description_placeholders={
+                                "message": f"✅ Started listening for {device}.{action} - press your remote button now!"
+                            }
+                        )
+                    except Exception as err:
+                        _LOGGER.error("Failed to call start_listening service: %s", err)
+                        errors["base"] = "service_call_failed"
 
-        return await self._show_capture_form()
-
-    def _setup_event_listener(self):
-        """Setup event listener for IR capture success."""
-        @callback
-        def handle_ir_saved(event):
-            """Handle IR code saved event."""
-            if (event.data.get("device") == self._device and 
-                event.data.get("action") == self._action):
-                self._listening = False
-                self._success_message = f"✅ IR code for {self._device}.{self._action} saved successfully!"
-                self._action = ""  # Clear action field
-                
-                # Remove listener
-                self.hass.bus.async_remove_listener(f"{DOMAIN}_saved", handle_ir_saved)
-        
-        self.hass.bus.async_listen(f"{DOMAIN}_saved", handle_ir_saved)
-
-    async def _show_capture_form(
-        self, 
-        waiting_message: str = None, 
-        device: str = None, 
-        action: str = None,
-        listening: bool = None
-    ) -> FlowResult:
-        """Show the IR capture form."""
-        if device is None:
-            device = self._device
-        if action is None:
-            action = self._action
-        if listening is None:
-            listening = self._listening
-            
-        # Build description
-        description = """**IR Code Capture**
-
-Use this interface to capture and store IR codes from your remote controls.
-
-1. Enter the device name (e.g., "TV", "Soundbar", "AC")
-2. Enter the action name (e.g., "power", "volume_up", "channel_1")
-3. Click "Start Listening" and then press the button on your remote
-4. The IR code will be automatically saved to the database
-
-**Note:** Make sure your HassBeam device is connected and working."""
-
-        if waiting_message:
-            description += f"\n\n🎯 **{waiting_message}**"
-        
-        if self._success_message:
-            description += f"\n\n{self._success_message}"
-
-        # Build schema - always show fields and button
-        schema_dict = {
-            vol.Required("device", default=device): str,
-            vol.Required("action", default=action): str,
-        }
-        
-        # Always show button - Home Assistant will handle it as a submit button
-        if not listening:
-            schema_dict[vol.Optional("start_listening")] = vol.Schema({})
-        else:
-            # Show waiting state in description instead of disabling button
-            pass
-
-        schema = vol.Schema(schema_dict)
-
+        # Show the form
         return self.async_show_form(
             step_id="init",
-            data_schema=schema,
+            data_schema=self._get_schema(
+                user_input.get("device", "") if user_input else "",
+                user_input.get("action", "") if user_input else ""
+            ),
             errors=errors,
             description_placeholders={
-                "description": description
+                "message": "Enter device and action names, then click Start Listening."
             }
         )
+
+    def _get_schema(self, device: str = "", action: str = "") -> vol.Schema:
+        """Get the form schema."""
+        return vol.Schema({
+            vol.Required("device", default=device): str,
+            vol.Required("action", default=action): str,
+            vol.Optional("start_listening"): bool,
+        })
