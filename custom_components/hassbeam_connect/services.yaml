@@ -1,0 +1,40 @@
+start_listening:
+  name: Start Listening
+  description: Start listening for IR codes from HassBeam device
+  fields:
+    device:
+      name: Device
+      description: Name of the device to learn IR codes for
+      required: true
+      selector:
+        text:
+    action:
+      name: Action
+      description: Name of the action to learn
+      required: true
+      selector:
+        text:
+
+get_recent_codes:
+  name: Get Recent Codes
+  description: Retrieve recently captured IR codes from database
+  fields:
+    device:
+      name: Device
+      description: Filter by device name (optional)
+      required: false
+      selector:
+        text:
+    limit:
+      name: Limit
+      description: Maximum number of codes to retrieve (default 10)
+      required: false
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 100
+
+debug_database:
+  name: Debug Database
+  description: Check database status and content for debugging

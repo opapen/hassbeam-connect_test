@@ -5,6 +5,8 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN, IR_EVENT_TYPE, DB_NAME
 from .database import init_db, save_ir_code, get_ir_codes
+import os
+import sqlite3
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -122,23 +124,130 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         "id": code[0],
                         "device": code[1],
                         "action": code[2],
+                        "event_data": code[3],
                         "created_at": code[4],
                     }
                 )
 
+            # Log the results for debugging
+            _LOGGER.info("Retrieved %d IR codes from database", len(formatted_codes))
+            for code in formatted_codes:
+                _LOGGER.info(
+                    "Code: %s.%s (ID: %s) - Created: %s",
+                    code["device"],
+                    code["action"],
+                    code["id"],
+                    code["created_at"]
+                )
+
             # Fire event with the codes
             hass.bus.fire(f"{DOMAIN}_codes_retrieved", {"codes": formatted_codes})
+
+            # Show notification with results
+            if formatted_codes:
+                message = f"Found {len(formatted_codes)} IR codes:\n"
+                for code in formatted_codes[:5]:  # Show first 5
+                    message += f"• {code['device']}.{code['action']} ({code['created_at']})\n"
+                if len(formatted_codes) > 5:
+                    message += f"... and {len(formatted_codes) - 5} more"
+            else:
+                message = "No IR codes found in database"
+                if device:
+                    message += f" for device '{device}'"
+
+            await hass.services.async_call(
+                "persistent_notification",
+                "create",
+                {
+                    "title": "Hassbeam Connect - Recent Codes",
+                    "message": message,
+                    "notification_id": "hassbeam_connect_recent_codes",
+                },
+                blocking=False,
+            )
 
             # Return for service response
             return {"codes": formatted_codes}
 
         except Exception as err:
             _LOGGER.error("Failed to retrieve IR codes: %s", err)
+            # Show error notification
+            await hass.services.async_call(
+                "persistent_notification",
+                "create",
+                {
+                    "title": "Hassbeam Connect - Error",
+                    "message": f"Failed to retrieve IR codes: {err}",
+                    "notification_id": "hassbeam_connect_error",
+                },
+                blocking=False,
+            )
             return {"codes": []}
 
     # Register the new service
     hass.services.async_register(
         DOMAIN, "get_recent_codes", handle_get_recent_codes_service
+    )
+
+    async def handle_debug_database_service(call):
+        """Debug service to check database status."""
+        try:
+            db_path = hass.config.path(DB_NAME)
+            
+            # Check if database file exists
+            if not os.path.exists(db_path):
+                message = f"Database file does not exist: {db_path}"
+                _LOGGER.warning(message)
+                await hass.services.async_call(
+                    "persistent_notification",
+                    "create",
+                    {
+                        "title": "Database Debug",
+                        "message": message,
+                        "notification_id": "hassbeam_debug",
+                    },
+                    blocking=False,
+                )
+                return
+            
+            # Check database content
+            with sqlite3.connect(db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) FROM ir_codes")
+                count = cursor.fetchone()[0]
+                
+                cursor.execute("SELECT * FROM ir_codes ORDER BY created_at DESC LIMIT 3")
+                recent = cursor.fetchall()
+                
+                message = f"Database: {db_path}\n"
+                message += f"Total IR codes: {count}\n\n"
+                
+                if recent:
+                    message += "Recent codes:\n"
+                    for code in recent:
+                        message += f"• {code[1]}.{code[2]} ({code[4]})\n"
+                else:
+                    message += "No codes found in database"
+                
+                _LOGGER.info("Database debug: %s", message)
+                
+                await hass.services.async_call(
+                    "persistent_notification",
+                    "create",
+                    {
+                        "title": "Database Debug",
+                        "message": message,
+                        "notification_id": "hassbeam_debug",
+                    },
+                    blocking=False,
+                )
+                
+        except Exception as err:
+            _LOGGER.error("Database debug failed: %s", err)
+
+    # Register the debug service
+    hass.services.async_register(
+        DOMAIN, "debug_database", handle_debug_database_service
     )
 
     _LOGGER.info("Hassbeam Connect integration setup completed")
@@ -152,6 +261,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Remove services
     hass.services.async_remove(DOMAIN, "start_listening")
     hass.services.async_remove(DOMAIN, "get_recent_codes")
+    hass.services.async_remove(DOMAIN, "debug_database")
 
     # Clear data
     hass.data.pop(DOMAIN, None)
