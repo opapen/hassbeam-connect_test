@@ -124,11 +124,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 "codes": formatted_codes
             })
             
-            return formatted_codes
+            # Return for service response
+            return {"codes": formatted_codes}
             
         except Exception as err:
             _LOGGER.error("Failed to retrieve IR codes: %s", err)
-            return []
+            return {"codes": []}
 
     # Register the new service
     hass.services.async_register(
