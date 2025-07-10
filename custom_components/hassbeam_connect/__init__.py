@@ -129,59 +129,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     }
                 )
 
-            # Log the results for debugging
-            _LOGGER.info("Retrieved %d IR codes from database", len(formatted_codes))
-            for code in formatted_codes:
-                _LOGGER.info(
-                    "Code: %s.%s (ID: %s) - Created: %s",
-                    code["device"],
-                    code["action"],
-                    code["id"],
-                    code["created_at"]
-                )
-
-            # Fire event with the codes
+            # Optional: Fire event for listeners (kann entfernt werden, falls nicht gewünscht)
             hass.bus.fire(f"{DOMAIN}_codes_retrieved", {"codes": formatted_codes})
 
-            # Show notification with results
-            if formatted_codes:
-                message = f"Found {len(formatted_codes)} IR codes:\n"
-                for code in formatted_codes[:5]:  # Show first 5
-                    message += f"• {code['device']}.{code['action']} ({code['created_at']})\n"
-                if len(formatted_codes) > 5:
-                    message += f"... and {len(formatted_codes) - 5} more"
-            else:
-                message = "No IR codes found in database"
-                if device:
-                    message += f" for device '{device}'"
-
-            await hass.services.async_call(
-                "persistent_notification",
-                "create",
-                {
-                    "title": "Hassbeam Connect - Recent Codes",
-                    "message": message,
-                    "notification_id": "hassbeam_connect_recent_codes",
-                },
-                blocking=False,
-            )
-
-            # Return for service response
+            # Nur Rückgabe, keine Benachrichtigung
             return {"codes": formatted_codes}
 
         except Exception as err:
             _LOGGER.error("Failed to retrieve IR codes: %s", err)
-            # Show error notification
-            await hass.services.async_call(
-                "persistent_notification",
-                "create",
-                {
-                    "title": "Hassbeam Connect - Error",
-                    "message": f"Failed to retrieve IR codes: {err}",
-                    "notification_id": "hassbeam_connect_error",
-                },
-                blocking=False,
-            )
             return {"codes": []}
 
     # Register the new service
