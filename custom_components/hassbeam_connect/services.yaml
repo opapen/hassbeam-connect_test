@@ -7,13 +7,13 @@ start_listening:
       description: Name of the device to learn IR codes for
       required: true
       selector:
-        text:
+        text: {}
     action:
       name: Action
       description: Name of the action to learn
       required: true
       selector:
-        text:
+        text: {}
 
 get_recent_codes:
   name: Get Recent Codes
@@ -24,7 +24,7 @@ get_recent_codes:
       description: Filter by device name (optional)
       required: false
       selector:
-        text:
+        text: {}
     limit:
       name: Limit
       description: Maximum number of codes to retrieve (default 10)

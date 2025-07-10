@@ -37,6 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     @callback
     def handle_ir_event(event):
         """Handle incoming IR events from HassBeam device."""
+        _LOGGER.info("Event '%s' received: %s", event.event_type, event.data)
         _LOGGER.warning(
             "DEBUG: IR event handler called! Event: %s, Data: %s",
             event.event_type,
@@ -62,6 +63,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             save_ir_code(hass.config.path(DB_NAME), device, action, event_data)
 
             # Fire success event
+            _LOGGER.info("Event '%s_saved' fired for device: %s, action: %s", DOMAIN, device, action)
             hass.bus.fire(f"{DOMAIN}_saved", {"device": device, "action": action})
 
             # Clear pending state
@@ -79,6 +81,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     @callback
     def debug_all_events(event):
         """Debug handler to see all events."""
+        _LOGGER.debug("Event received: %s, data: %s", event.event_type, event.data)
         if "ir" in event.event_type.lower() or "remote" in event.event_type.lower():
             _LOGGER.warning(
                 "DEBUG: Received event: %s with data: %s", event.event_type, event.data
@@ -88,6 +91,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_start_listening_service(call):
         """Handle the start_listening service call."""
+        _LOGGER.info("Service 'start_listening' called with data: %s", call.data)
         device = call.data.get("device", "").strip()
         action = call.data.get("action", "").strip()
 
@@ -109,6 +113,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_get_recent_codes_service(call):
         """Handle the get_recent_codes service call."""
+        _LOGGER.info("Service 'get_recent_codes' called with data: %s", call.data)
         device = call.data.get("device")
         limit = call.data.get("limit", 10)
 
@@ -116,23 +121,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             db_path = hass.config.path(DB_NAME)
             codes = get_ir_codes(db_path, device, limit)
 
-            # Convert to a more user-friendly format
-            formatted_codes = []
-            for code in codes:
-                formatted_codes.append(
-                    {
-                        "id": code[0],
-                        "device": code[1],
-                        "action": code[2],
-                        "event_data": code[3],
-                        "created_at": code[4],
-                    }
-                )
+            formatted_codes = [
+                {
+                    "id": code[0],
+                    "device": code[1],
+                    "action": code[2],
+                    "event_data": code[3],
+                    "created_at": code[4],
+                }
+                for code in codes
+            ]
 
-            # Optional: Fire event for listeners (kann entfernt werden, falls nicht gewünscht)
+            _LOGGER.info("Event '%s_codes_retrieved' fired with %d codes", DOMAIN, len(formatted_codes))
+            # Event für Listener (optional, falls benötigt)
             hass.bus.fire(f"{DOMAIN}_codes_retrieved", {"codes": formatted_codes})
 
-            # Nur Rückgabe, keine Benachrichtigung
             return {"codes": formatted_codes}
 
         except Exception as err:
@@ -146,6 +149,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_debug_database_service(call):
         """Debug service to check database status."""
+        _LOGGER.info("Service 'debug_database' called with data: %s", call.data)
         try:
             db_path = hass.config.path(DB_NAME)
             
