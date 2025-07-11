@@ -25,6 +25,12 @@ get_recent_codes:
       required: false
       selector:
         text: {}
+    action:
+      name: Action
+      description: Filter by action name (optional)
+      required: false
+      selector:
+        text: {}
     limit:
       name: Limit
       description: Maximum number of codes to retrieve (default 10)

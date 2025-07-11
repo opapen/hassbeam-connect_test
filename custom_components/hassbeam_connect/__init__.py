@@ -30,11 +30,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Handle the get_recent_codes service call."""
         _LOGGER.info("Service 'get_recent_codes' called with data: %s", call.data)
         device = call.data.get("device")
+        action = call.data.get("action")  
         limit = call.data.get("limit", 10)
+       # NEW: allow action filter
 
         try:
             db_path = hass.config.path(DB_NAME)
-            codes = get_ir_codes(db_path, device, limit)
+            codes = get_ir_codes(db_path, device, action, limit)  # pass action
 
             formatted_codes = [
                 {

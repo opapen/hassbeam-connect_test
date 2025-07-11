@@ -93,19 +93,28 @@ def delete_ir_code(path: str, code_id: int) -> bool:
         return False
 
 
-def get_ir_codes(path: str, device: str = None, limit: int = 10) -> list:
+def get_ir_codes(path: str, device: str = None, action: str = None, limit: int = 10) -> list:
     """Retrieve IR codes from the database."""
     try:
         with sqlite3.connect(path) as conn:
             cursor = conn.cursor()
-            if device:
+            if device and action:
+                cursor.execute(
+                    "SELECT * FROM ir_codes WHERE device = ? AND action = ? ORDER BY created_at DESC LIMIT ?",
+                    (device, action, limit)
+                )
+            elif device:
                 cursor.execute(
                     "SELECT * FROM ir_codes WHERE device = ? ORDER BY created_at DESC LIMIT ?",
                     (device, limit)
                 )
+            elif action:
+                cursor.execute(
+                    "SELECT * FROM ir_codes WHERE action = ? ORDER BY created_at DESC LIMIT ?",
+                    (action, limit)
+                )
             else:
                 cursor.execute("SELECT * FROM ir_codes ORDER BY created_at DESC LIMIT ?", (limit,))
-            
             results = cursor.fetchall()
             _LOGGER.debug("Retrieved %d IR codes", len(results))
             return results
