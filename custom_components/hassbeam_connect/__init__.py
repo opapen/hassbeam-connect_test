@@ -4,7 +4,7 @@ import logging
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN, DB_NAME
-from .database import init_db, get_ir_codes, save_ir_code
+from .database import init_db, get_ir_codes, save_ir_code, check_ir_code_exists, delete_ir_code
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -86,8 +86,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     _LOGGER.error("Invalid JSON in event_data: %s", event_data)
                     return {"success": False, "error": "Invalid JSON in event_data"}
 
-            # Save to database
+            # Check if entry already exists
             db_path = hass.config.path(DB_NAME)
+            if check_ir_code_exists(db_path, device, action):
+                error_msg = f"IR code for {device}.{action} already exists"
+                _LOGGER.warning(error_msg)
+                
+                # Fire error event
+                hass.bus.fire(f"{DOMAIN}_code_saved", {
+                    "device": device, 
+                    "action": action,
+                    "success": False,
+                    "error": error_msg
+                })
+                
+                return {"success": False, "error": error_msg}
+
+            # Save to database
             save_ir_code(db_path, device, action, event_data)
 
             _LOGGER.info("IR code saved successfully for %s.%s", device, action)
@@ -114,6 +129,60 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             
             return {"success": False, "error": str(err)}
 
+    async def handle_delete_ir_code_service(call):
+        """Handle the delete_ir_code service call."""
+        _LOGGER.info("Service 'delete_ir_code' called with data: %s", call.data)
+        code_id = call.data.get("id")
+
+        if not code_id:
+            _LOGGER.error("ID is required for delete_ir_code service")
+            return {"success": False, "error": "ID is required"}
+
+        try:
+            code_id = int(code_id)
+        except (ValueError, TypeError):
+            _LOGGER.error("Invalid ID format: %s", code_id)
+            return {"success": False, "error": "Invalid ID format"}
+
+        try:
+            db_path = hass.config.path(DB_NAME)
+            success = delete_ir_code(db_path, code_id)
+
+            if success:
+                _LOGGER.info("IR code deleted successfully: ID %d", code_id)
+                
+                # Fire success event
+                hass.bus.fire(f"{DOMAIN}_code_deleted", {
+                    "id": code_id,
+                    "success": True
+                })
+                
+                return {"success": True, "id": code_id}
+            else:
+                error_msg = f"No IR code found with ID {code_id}"
+                _LOGGER.warning(error_msg)
+                
+                # Fire error event
+                hass.bus.fire(f"{DOMAIN}_code_deleted", {
+                    "id": code_id,
+                    "success": False,
+                    "error": error_msg
+                })
+                
+                return {"success": False, "error": error_msg}
+
+        except Exception as err:
+            _LOGGER.error("Failed to delete IR code: %s", err)
+            
+            # Fire error event
+            hass.bus.fire(f"{DOMAIN}_code_deleted", {
+                "id": code_id,
+                "success": False,
+                "error": str(err)
+            })
+            
+            return {"success": False, "error": str(err)}
+
     # Register the services
     hass.services.async_register(
         DOMAIN, "get_recent_codes", handle_get_recent_codes_service
@@ -121,6 +190,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     hass.services.async_register(
         DOMAIN, "save_ir_code", handle_save_ir_code_service
+    )
+    
+    hass.services.async_register(
+        DOMAIN, "delete_ir_code", handle_delete_ir_code_service
+    )
+    
+    hass.services.async_register(
+        DOMAIN, "delete_ir_code", handle_delete_ir_code_service
     )
 
     _LOGGER.info("Hassbeam Connect integration setup completed")
@@ -134,6 +211,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Remove services
     hass.services.async_remove(DOMAIN, "get_recent_codes")
     hass.services.async_remove(DOMAIN, "save_ir_code")
+    hass.services.async_remove(DOMAIN, "delete_ir_code")
+    hass.services.async_remove(DOMAIN, "delete_ir_code")
 
     # Clear data
     hass.data.pop(DOMAIN, None)

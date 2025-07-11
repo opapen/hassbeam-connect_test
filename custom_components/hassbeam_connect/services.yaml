@@ -35,6 +35,41 @@ get_recent_codes:
           min: 1
           max: 100
 
+save_ir_code:
+  name: Save IR Code
+  description: Save an IR code to the database
+  fields:
+    device:
+      name: Device
+      description: Name of the device
+      required: true
+      selector:
+        text: {}
+    action:
+      name: Action
+      description: Name of the action
+      required: true
+      selector:
+        text: {}
+    event_data:
+      name: Event Data
+      description: IR event data (JSON string or object)
+      required: true
+      selector:
+        text: {}
+
+delete_ir_code:
+  name: Delete IR Code
+  description: Delete an IR code from the database
+  fields:
+    id:
+      name: ID
+      description: ID of the IR code to delete
+      required: true
+      selector:
+        number:
+          min: 1
+
 debug_database:
   name: Debug Database
   description: Check database status and content for debugging

@@ -28,8 +28,32 @@ def init_db(path: str) -> None:
         raise
 
 
+def check_ir_code_exists(path: str, device: str, action: str) -> bool:
+    """Check if an IR code with the same device and action combination already exists."""
+    try:
+        with sqlite3.connect(path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT COUNT(*) FROM ir_codes WHERE device = ? AND action = ?",
+                (device, action)
+            )
+            count = cursor.fetchone()[0]
+            exists = count > 0
+            _LOGGER.debug("IR code exists check for %s.%s: %s", device, action, exists)
+            return exists
+    except sqlite3.Error as err:
+        _LOGGER.error("Failed to check IR code existence: %s", err)
+        return False
+
+
 def save_ir_code(path: str, device: str, action: str, event_data: Dict[str, Any]) -> None:
     """Save an IR code to the database."""
+    # Check if entry already exists
+    if check_ir_code_exists(path, device, action):
+        error_msg = f"IR code for {device}.{action} already exists"
+        _LOGGER.warning(error_msg)
+        raise ValueError(error_msg)
+    
     try:
         with sqlite3.connect(path) as conn:
             cursor = conn.cursor()
@@ -45,6 +69,27 @@ def save_ir_code(path: str, device: str, action: str, event_data: Dict[str, Any]
     except (TypeError, ValueError) as err:
         _LOGGER.error("Invalid data format: %s", err)
         raise
+
+
+def delete_ir_code(path: str, code_id: int) -> bool:
+    """Delete an IR code from the database by ID."""
+    try:
+        with sqlite3.connect(path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM ir_codes WHERE id = ?", (code_id,))
+            deleted_count = cursor.rowcount
+            conn.commit()
+            
+            if deleted_count > 0:
+                _LOGGER.debug("IR code deleted successfully: ID %d", code_id)
+                return True
+            else:
+                _LOGGER.warning("No IR code found with ID %d", code_id)
+                return False
+                
+    except sqlite3.Error as err:
+        _LOGGER.error("Failed to delete IR code: %s", err)
+        return False
 
 
 def get_ir_codes(path: str, device: str = None, limit: int = 10) -> list:
