@@ -93,12 +93,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 _LOGGER.warning(error_msg)
                 
                 # Fire error event
-                hass.bus.fire(f"{DOMAIN}_code_saved", {
+                event_data = {
                     "device": device, 
                     "action": action,
                     "success": False,
                     "error": error_msg
-                })
+                }
+                _LOGGER.info("Firing error event: %s with data: %s", f"{DOMAIN}_code_saved", event_data)
+                hass.bus.fire(f"{DOMAIN}_code_saved", event_data)
                 
                 return {"success": False, "error": error_msg}
 
@@ -109,11 +111,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 _LOGGER.info("IR code saved successfully for %s.%s", device, action)
 
                 # Fire success event
-                hass.bus.fire(f"{DOMAIN}_code_saved", {
+                event_data = {
                     "device": device, 
                     "action": action,
                     "success": True
-                })
+                }
+                _LOGGER.info("Firing success event: %s with data: %s", f"{DOMAIN}_code_saved", event_data)
+                hass.bus.fire(f"{DOMAIN}_code_saved", event_data)
 
                 return {"success": True, "device": device, "action": action}
             else:
