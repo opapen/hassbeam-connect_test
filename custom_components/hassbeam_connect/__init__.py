@@ -489,14 +489,16 @@ def _register_services(hass: HomeAssistant):
             
             try:
                 # Get the service name and prepare parameters for the specific protocol
-                service_name, service_data = _prepare_service_data(protocol, event_data)
+                base_service_name, service_data = _prepare_service_data(protocol, event_data)
                 
-                # Determine the service domain
+                # Determine the service domain and name
                 if hassbeam_device:
-                    service_domain = f"esphome.{hassbeam_device}"
+                    service_domain = "esphome"
+                    service_name = f"{hassbeam_device}_{base_service_name}"
                 else:
                     # Use default device name
-                    service_domain = "esphome.hassbeam"
+                    service_domain = "esphome"
+                    service_name = f"hassbeam_{base_service_name}"
                 
                 _LOGGER.info("Calling service %s.%s with data: %s", service_domain, service_name, service_data)
                 
