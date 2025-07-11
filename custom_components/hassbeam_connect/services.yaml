@@ -58,3 +58,26 @@ delete_ir_code:
       selector:
         number:
           min: 1
+
+send_ir_code:
+  name: Send IR Code
+  description: Send an IR code that is stored in the database
+  fields:
+    device:
+      name: Device
+      description: Name of the device
+      required: true
+      selector:
+        text: {}
+    action:
+      name: Action
+      description: Name of the action
+      required: true
+      selector:
+        text: {}
+    hassbeam_device:
+      name: HassBeam Device
+      description: Target HassBeam device (optional)
+      required: false
+      selector:
+        text: {}

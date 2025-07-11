@@ -125,3 +125,36 @@ def get_ir_codes(path: str, device: Optional[str] = None, action: Optional[str] 
     except sqlite3.Error as err:
         _LOGGER.error("Failed to retrieve IR codes: %s", err)
         return []
+
+
+def get_ir_code_by_device_action(path: str, device: str, action: str) -> Optional[Dict[str, Any]]:
+    """Retrieve a specific IR code by device and action."""
+    try:
+        with sqlite3.connect(path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT id, device, action, event_data, created_at FROM ir_codes WHERE device = ? AND action = ?",
+                (device, action)
+            )
+            result = cursor.fetchone()
+            
+            if result:
+                code_data = {
+                    "id": result[0],
+                    "device": result[1],
+                    "action": result[2],
+                    "event_data": json.loads(result[3]),
+                    "created_at": result[4]
+                }
+                _LOGGER.debug("Retrieved IR code for %s.%s", device, action)
+                return code_data
+            else:
+                _LOGGER.debug("No IR code found for %s.%s", device, action)
+                return None
+                
+    except sqlite3.Error as err:
+        _LOGGER.error("Failed to retrieve IR code: %s", err)
+        return None
+    except json.JSONDecodeError as err:
+        _LOGGER.error("Failed to parse event data: %s", err)
+        return None
