@@ -1,20 +1,13 @@
-"""
-Constants for the HassBeam Connect integration.
+"""Constants for the HassBeam Connect integration."""
 
-This module defines all constants used throughout the HassBeam Connect integration,
-including domain names, event types, and configuration parameters.
-"""
-
-# Integration domain name used by Home Assistant
+# Integration domain
 DOMAIN = "hassbeam_connect"
 
-# Event type fired by ESPHome HassBeam devices when IR codes are received
-IR_EVENT_TYPE = "esphome.hassbeam.ir_received"
-
-# Name of the SQLite database file for storing IR codes
+# Database filename
 DB_NAME = "hassbeam.db"
 
-# List of event types that the integration listens for
-TEST_EVENT_TYPES = [
-    "esphome.hassbeam.ir_received",  # Standard HassBeam event
-]
+# ESPHome event type
+IR_EVENT_TYPE = "esphome.hassbeam.ir_received"
+
+# Test event types
+TEST_EVENT_TYPES = ["esphome.hassbeam.ir_received"]
