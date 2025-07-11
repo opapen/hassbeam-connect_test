@@ -103,18 +103,32 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 return {"success": False, "error": error_msg}
 
             # Save to database
-            save_ir_code(db_path, device, action, event_data)
+            success = save_ir_code(db_path, device, action, event_data)
+            
+            if success:
+                _LOGGER.info("IR code saved successfully for %s.%s", device, action)
 
-            _LOGGER.info("IR code saved successfully for %s.%s", device, action)
+                # Fire success event
+                hass.bus.fire(f"{DOMAIN}_code_saved", {
+                    "device": device, 
+                    "action": action,
+                    "success": True
+                })
 
-            # Fire success event
-            hass.bus.fire(f"{DOMAIN}_code_saved", {
-                "device": device, 
-                "action": action,
-                "success": True
-            })
-
-            return {"success": True, "device": device, "action": action}
+                return {"success": True, "device": device, "action": action}
+            else:
+                error_msg = f"Failed to save IR code for {device}.{action}"
+                _LOGGER.error(error_msg)
+                
+                # Fire error event
+                hass.bus.fire(f"{DOMAIN}_code_saved", {
+                    "device": device, 
+                    "action": action,
+                    "success": False,
+                    "error": error_msg
+                })
+                
+                return {"success": False, "error": error_msg}
 
         except Exception as err:
             _LOGGER.error("Failed to save IR code: %s", err)
@@ -195,10 +209,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.services.async_register(
         DOMAIN, "delete_ir_code", handle_delete_ir_code_service
     )
-    
-    hass.services.async_register(
-        DOMAIN, "delete_ir_code", handle_delete_ir_code_service
-    )
 
     _LOGGER.info("Hassbeam Connect integration setup completed")
     return True
@@ -211,7 +221,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Remove services
     hass.services.async_remove(DOMAIN, "get_recent_codes")
     hass.services.async_remove(DOMAIN, "save_ir_code")
-    hass.services.async_remove(DOMAIN, "delete_ir_code")
     hass.services.async_remove(DOMAIN, "delete_ir_code")
 
     # Clear data

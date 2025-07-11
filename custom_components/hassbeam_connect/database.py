@@ -46,13 +46,13 @@ def check_ir_code_exists(path: str, device: str, action: str) -> bool:
         return False
 
 
-def save_ir_code(path: str, device: str, action: str, event_data: Dict[str, Any]) -> None:
+def save_ir_code(path: str, device: str, action: str, event_data: Dict[str, Any]) -> bool:
     """Save an IR code to the database."""
     # Check if entry already exists
     if check_ir_code_exists(path, device, action):
         error_msg = f"IR code for {device}.{action} already exists"
         _LOGGER.warning(error_msg)
-        raise ValueError(error_msg)
+        return False  # Return False instead of raising exception
     
     try:
         with sqlite3.connect(path) as conn:
@@ -63,12 +63,13 @@ def save_ir_code(path: str, device: str, action: str, event_data: Dict[str, Any]
             )
             conn.commit()
             _LOGGER.debug("IR code saved: %s.%s", device, action)
+            return True
     except sqlite3.Error as err:
         _LOGGER.error("Failed to save IR code: %s", err)
-        raise
+        return False
     except (TypeError, ValueError) as err:
         _LOGGER.error("Invalid data format: %s", err)
-        raise
+        return False
 
 
 def delete_ir_code(path: str, code_id: int) -> bool:
